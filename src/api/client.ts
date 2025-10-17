@@ -64,7 +64,8 @@ export async function request<T = unknown>(path: string, options: RequestOptions
   const data = isJson ? await res.json().catch(() => undefined) : await res.text().catch(() => undefined);
 
   if (!res.ok) {
-    const message = (isJson && (data as any)?.message) || `Request failed with status ${res.status}`;
+    interface ResponseData { message?: string }
+    const message = (isJson && (data as ResponseData)?.message) || `Request failed with status ${res.status}`;
     throw new ApiError(message, res.status, data);
   }
   return data as T;
