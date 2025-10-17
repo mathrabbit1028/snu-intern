@@ -88,7 +88,12 @@ const Signup = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <button type="button" className="icon-btn" onClick={() => setShowPassword((v) => !v)} aria-label="비밀번호 표시 토글">
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label="비밀번호 표시 토글"
+              >
                 {showPassword ? <EyeOff /> : <Eye />}
               </button>
             </div>
@@ -103,7 +108,12 @@ const Signup = () => {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
               />
-              <button type="button" className="icon-btn" onClick={() => setShowConfirm((v) => !v)} aria-label="비밀번호 확인 표시 토글">
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setShowConfirm((v) => !v)}
+                aria-label="비밀번호 확인 표시 토글"
+              >
                 {showConfirm ? <EyeOff /> : <Eye />}
               </button>
             </div>

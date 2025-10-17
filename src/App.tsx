@@ -9,7 +9,13 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '100vh',
+          }}
+        >
           <NavBar />
           <main style={{ flex: 1 }}>
             <Routes>

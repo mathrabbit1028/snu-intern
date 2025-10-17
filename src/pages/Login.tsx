@@ -66,7 +66,12 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <button type="button" className="icon-btn" onClick={() => setShowPassword((v) => !v)} aria-label="비밀번호 표시 토글">
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label="비밀번호 표시 토글"
+              >
                 {showPassword ? <EyeOff /> : <Eye />}
               </button>
             </div>

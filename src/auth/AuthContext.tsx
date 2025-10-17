@@ -1,8 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { apiLogin, apiLogout, apiMe, apiSignup, getToken } from '../api/client';
 import type { MeResponse } from '../api/client';
 
-export type User = {
+type User = {
   id?: number | string;
   email?: string;
   name?: string; // display name (real name)
@@ -13,7 +20,12 @@ type AuthContextValue = {
   loading: boolean;
   refresh: () => Promise<void>;
   login: (input: { email: string; password: string }) => Promise<void>;
-  signup: (input: { name: string; email: string; password: string; successCode?: string }) => Promise<void>;
+  signup: (input: {
+    name: string;
+    email: string;
+    password: string;
+    successCode?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -26,7 +38,8 @@ function toUser(me: MeResponse | null | undefined): User | null {
   return {
     id: me.id,
     email: me.email,
-    name: (me.realName as string) || (me.name as string) || me.email || '사용자',
+    name:
+      (me.realName as string) || (me.name as string) || me.email || '사용자',
   };
 }
 
@@ -62,15 +75,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [persist]);
 
-  const login = useCallback(async (input: { email: string; password: string }) => {
-    await apiLogin(input);
-    await refresh();
-  }, [refresh]);
+  const login = useCallback(
+    async (input: { email: string; password: string }) => {
+      await apiLogin(input);
+      await refresh();
+    },
+    [refresh]
+  );
 
-  const signup = useCallback(async (input: { name: string; email: string; password: string; successCode?: string }) => {
-    await apiSignup(input);
-    await refresh();
-  }, [refresh]);
+  const signup = useCallback(
+    async (input: {
+      name: string;
+      email: string;
+      password: string;
+      successCode?: string;
+    }) => {
+      await apiSignup(input);
+      await refresh();
+    },
+    [refresh]
+  );
 
   const logout = useCallback(async () => {
     await apiLogout();
@@ -88,7 +112,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [refresh]);
 
-  const value = useMemo<AuthContextValue>(() => ({ user, loading, refresh, login, signup, logout }), [user, loading, refresh, login, signup, logout]);
+  const value = useMemo<AuthContextValue>(
+    () => ({ user, loading, refresh, login, signup, logout }),
+    [user, loading, refresh, login, signup, logout]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
