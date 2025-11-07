@@ -5,12 +5,12 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [react()],
   server: {
-    proxy: {
-      '/api': {
-        target: 'https://api-internhasha.wafflestudio.com',
-        changeOrigin: true,
-        secure: true,
-      },
-    },
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['5173-io471clzekza1qcldtndg-1cdee1e0.manusvm.computer'],
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 5173,
   },
 });

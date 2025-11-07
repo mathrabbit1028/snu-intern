@@ -1,41 +1,65 @@
-import { useSearchParams } from 'react-router-dom';
+import './Pagination.css';
 
-export default function Pagination({
-  current,
-  lastPage,
-}: { current: number; lastPage: number }) {
-  const [sp, setSp] = useSearchParams();
-  const blockStart = Math.floor((current - 1) / 5) * 5 + 1;
-  const blockEnd = Math.min(blockStart + 4, lastPage);
-  const numbers = [];
-  for (let p = blockStart; p <= blockEnd; p++) numbers.push(p);
+interface PaginationProps {
+  currentPage: number;
+  lastPage: number;
+  onPageChange: (page: number) => void;
+}
 
-  const go = (p: number) => {
-    const next = new URLSearchParams(sp);
-    next.set('page', String(p));
-    setSp(next);
+const Pagination = ({ currentPage, lastPage, onPageChange }: PaginationProps) => {
+  if (lastPage <= 1) return null;
+
+  // Calculate page range to show (max 5 pages)
+  const getPageRange = () => {
+    const maxButtons = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let end = Math.min(lastPage, start + maxButtons - 1);
+    
+    // Adjust start if we're near the end
+    if (end - start < maxButtons - 1) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+    
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   };
+
+  const pages = getPageRange();
 
   return (
     <div className="pagination">
       <button
-        disabled={blockStart <= 1}
-        onClick={() => go(Math.max(1, blockStart - 1))}
+        className="pagination-button pagination-arrow"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        aria-label="이전 페이지"
       >
-        &laquo;
+        &lt;
       </button>
-      {numbers.map((n) => (
+      
+      {pages.map((page) => (
         <button
-          key={n}
-          onClick={() => go(n)}
-          className={n === current ? 'active' : undefined}
+          key={page}
+          className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+          onClick={() => onPageChange(page)}
         >
-          {n}
+          {page}
         </button>
       ))}
-      <button disabled={blockEnd >= lastPage} onClick={() => go(blockEnd + 1)}>
-        &raquo;
+      
+      <button
+        className="pagination-button pagination-arrow"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === lastPage}
+        aria-label="다음 페이지"
+      >
+        &gt;
       </button>
     </div>
   );
-}
+};
+
+export default Pagination;

@@ -1,5 +1,5 @@
-// Simple API client with credentials support (proxied by Vite dev server)
-const BASE_URL = '';
+// Simple API client with credentials support
+const BASE_URL = 'https://api-internhasha.wafflestudio.com';
 
 const TOKEN_KEY = 'auth_token_v1';
 
@@ -177,3 +177,62 @@ export function apiMe() {
 
 // Email verification APIs (to obtain successCode for signup)
 // (Email verification APIs removed as signup no longer requires verification in this app)
+
+// Post APIs
+import type { PostListResponse, FilterParams } from '../types/post';
+
+export function buildPostQueryParams(params: FilterParams): string {
+  const searchParams = new URLSearchParams();
+  
+  if (params.positions && params.positions.length > 0) {
+    // API uses 'roles' parameter, not 'positions'
+    const rolesValue = params.positions.join(',');
+    searchParams.append('roles', rolesValue);
+  }
+  
+  if (params.domains && params.domains.length > 0) {
+    params.domains.forEach(domain => {
+      searchParams.append('domains', domain);
+    });
+  }
+  
+  if (params.isActive !== undefined) {
+    searchParams.append('isActive', String(params.isActive));
+  }
+  
+  if (params.order !== undefined) {
+    searchParams.append('order', String(params.order));
+  }
+  
+  if (params.page !== undefined) {
+    searchParams.append('page', String(params.page));
+  }
+  
+  if (params.size !== undefined) {
+    searchParams.append('size', String(params.size));
+  }
+  
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
+export async function apiGetPosts(params: FilterParams = {}): Promise<PostListResponse> {
+  const queryString = buildPostQueryParams(params);
+  console.log('[API] getPosts params:', params);
+  console.log('[API] getPosts queryString:', queryString);
+  return request<PostListResponse>(`/api/post${queryString}`, {
+    method: 'GET',
+  });
+}
+
+export async function apiBookmarkPost(postId: string): Promise<void> {
+  await request<void>(`/api/post/${postId}/bookmark`, {
+    method: 'POST',
+  });
+}
+
+export async function apiUnbookmarkPost(postId: string): Promise<void> {
+  await request<void>(`/api/post/${postId}/bookmark`, {
+    method: 'DELETE',
+  });
+}

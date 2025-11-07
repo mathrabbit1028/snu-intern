@@ -1,79 +1,95 @@
-import { useEffect, useMemo, useState } from 'react';
-import { type Post, addBookmark, removeBookmark } from '../api/posts';
-import { useAuth } from '../auth/AuthContext';
+import { useState } from 'react';
+import type { Post } from '../types/post';
+import { DOMAIN_NAMES } from '../types/post';
+import { apiBookmarkPost, apiUnbookmarkPost } from '../api/client';
+import './PostCard.css';
 
-export default function PostCard({
-  post,
-  onChanged,
-  onRequireLogin,
-}: {
+interface PostCardProps {
   post: Post;
-  onChanged?: (next: boolean) => void;
-  onRequireLogin?: () => void;
-}) {
-  const { user } = useAuth();
-  const [busy, setBusy] = useState(false);
-  const [liked, setLiked] = useState(!!post.isBookmarked);
+  isLoggedIn: boolean;
+  onLoginRequired: () => void;
+  onBookmarkChange: () => void;
+}
 
-  // Sync liked state with post.isBookmarked when it changes (e.g., after logout/refresh)
-  useEffect(() => {
-    setLiked(!!post.isBookmarked);
-  }, [post.isBookmarked]);
+const PostCard = ({ post, isLoggedIn, onLoginRequired, onBookmarkChange }: PostCardProps) => {
+  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const deadline = useMemo(
-    () => (post.employmentEndDate ? new Date(post.employmentEndDate) : null),
-    [post.employmentEndDate]
-  );
-
-  const toggle = async () => {
-    if (!user) {
-      onRequireLogin?.();
+  const handleBookmarkClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!isLoggedIn) {
+      onLoginRequired();
       return;
     }
-    if (busy) return;
-    setBusy(true);
+
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
-      if (liked) await removeBookmark(post.id);
-      else await addBookmark(post.id);
-      setLiked(!liked);
-      onChanged?.(!liked);
-    } catch (_e) {
-      alert('북마크 처리 중 오류가 발생했습니다.');
+      if (isBookmarked) {
+        await apiUnbookmarkPost(post.id);
+        setIsBookmarked(false);
+      } else {
+        await apiBookmarkPost(post.id);
+        setIsBookmarked(true);
+      }
+      onBookmarkChange();
+    } catch (error) {
+      console.error('북마크 처리 실패:', error);
     } finally {
-      setBusy(false);
+      setIsLoading(false);
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `마감: ${year}. ${month}. ${day}.`;
+  };
+
+  // Generate a consistent color based on company name
+  const getCompanyColor = (name: string) => {
+    const colors = [
+      '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', 
+      '#F44336', '#00BCD4', '#FFEB3B', '#795548'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   return (
-    <div className="postcard">
-      <div className="post-header">
-        <div
-          style={{ width: 48, height: 48, background: '#eee', borderRadius: 8 }}
-          aria-hidden
+    <div className="post-card">
+      <div className="post-card-header">
+        <div 
+          className="company-logo-block" 
+          style={{ backgroundColor: getCompanyColor(post.companyName) }}
         />
-        <button
-          className={`bookmark-btn${liked ? ' active' : ''}`}
-          onClick={toggle}
-          disabled={busy}
-          aria-label="bookmark"
+        <button 
+          className={`bookmark-button ${isBookmarked ? 'bookmarked' : ''}`}
+          onClick={handleBookmarkClick}
+          disabled={isLoading}
+          aria-label={isBookmarked ? '북마크 해제' : '북마크 추가'}
         >
-          {liked ? '★' : '☆'}
+          {isBookmarked ? '★' : '☆'}
         </button>
       </div>
-      <div className="meta-row">
-        <span className="badge">{post.companyName}</span>
-        <span className="badge">{post.domain}</span>
-      </div>
-      <div style={{ fontSize: 18, fontWeight: 700 }}>{post.positionTitle}</div>
-      <div style={{ fontSize: 13, color: '#cbd2e0' }}>{post.slogan ?? ''}</div>
-      <div className="meta-row">
-        {deadline && (
-          <span className="d-day">마감 {deadline.toLocaleDateString()}</span>
-        )}
-        {typeof post.headCount === 'number' && (
-          <span>모집 {post.headCount}명</span>
-        )}
+      <div className="post-card-body">
+        <p className="company-name">{post.companyName}</p>
+        <h3 className="position-title">{post.positionTitle}</h3>
+        <div className="post-tags">
+          <span className="tag tag-domain">{DOMAIN_NAMES[post.domain]}</span>
+        </div>
+        <p className="employment-date">{formatDate(post.employmentEndDate)}</p>
+        <p className="slogan">{post.slogan}</p>
       </div>
     </div>
   );
-}
+};
+
+export default PostCard;

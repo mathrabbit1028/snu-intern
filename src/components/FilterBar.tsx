@@ -1,229 +1,172 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import type { Position, Domain } from '../types/post';
+import { POSITION_NAMES, DOMAIN_NAMES, POSITION_GROUPS } from '../types/post';
+import './FilterBar.css';
 
-const POSITIONS = [
-  { label: '개발 전체', values: ['FRONT', 'APP', 'BACKEND', 'DATA', 'OTHERS'] },
-  { label: 'FRONT', values: ['FRONT'] },
-  { label: 'APP', values: ['APP'] },
-  { label: 'BACKEND', values: ['BACKEND'] },
-  { label: 'DATA', values: ['DATA'] },
-  { label: '기타개발', values: ['OTHERS'] },
-  { label: 'DESIGN', values: ['DESIGN'] },
-  { label: 'PLANNER', values: ['PLANNER'] },
-  { label: 'MARKETING', values: ['MARKETING'] },
-];
+interface FilterBarProps {
+  selectedPositions: Position[];
+  selectedDomains: Domain[];
+  isActive: boolean;
+  order: number;
+  onPositionsChange: (positions: Position[]) => void;
+  onDomainsChange: (domains: Domain[]) => void;
+  onIsActiveChange: (isActive: boolean) => void;
+  onOrderChange: (order: number) => void;
+  onReset: () => void;
+}
 
-const DOMAINS = [
-  'FINTECH',
-  'HEALTHTECH',
-  'EDUCATION',
-  'ECOMMERCE',
-  'FOODTECH',
-  'MOBILITY',
-  'CONTENTS',
-  'B2B',
-  'OTHERS',
-];
+const FilterBar = ({
+  selectedPositions,
+  selectedDomains,
+  isActive,
+  order,
+  onPositionsChange,
+  onDomainsChange,
+  onIsActiveChange,
+  onOrderChange,
+  onReset,
+}: FilterBarProps) => {
+  const [showPositionDropdown, setShowPositionDropdown] = useState(false);
+  const [showDomainDropdown, setShowDomainDropdown] = useState(false);
+  const positionRef = useRef<HTMLDivElement>(null);
+  const domainRef = useRef<HTMLDivElement>(null);
 
-export default function FilterBar() {
-  const [sp, setSp] = useSearchParams();
-  const [openRoles, setOpenRoles] = useState(false);
-  const [openDomains, setOpenDomains] = useState(false);
-  const [openStatus, setOpenStatus] = useState(false);
-  const roles = sp.getAll('roles');
-  const domains = sp.getAll('domains');
-  const isActive = sp.get('isActive') ?? 'false';
-  const order = sp.get('order') ?? '0';
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (positionRef.current && !positionRef.current.contains(event.target as Node)) {
+        setShowPositionDropdown(false);
+      }
+      if (domainRef.current && !domainRef.current.contains(event.target as Node)) {
+        setShowDomainDropdown(false);
+      }
+    };
 
-  const apply = (mutate: (next: URLSearchParams) => void) => {
-    const next = new URLSearchParams(sp);
-    mutate(next);
-    next.set('page', '1');
-    setSp(next);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handlePositionToggle = (position: Position) => {
+    if (selectedPositions.includes(position)) {
+      onPositionsChange(selectedPositions.filter(p => p !== position));
+    } else {
+      onPositionsChange([...selectedPositions, position]);
+    }
   };
 
-  const toggleRole = (value: string) => {
-    apply((next) => {
-      const current = new Set(next.getAll('roles'));
-      if (current.has(value)) current.delete(value);
-      else current.add(value);
-      next.delete('roles');
-      Array.from(current).forEach((v) => next.append('roles', v));
-    });
+  const handleDomainToggle = (domain: Domain) => {
+    if (selectedDomains.includes(domain)) {
+      onDomainsChange(selectedDomains.filter(d => d !== domain));
+    } else {
+      onDomainsChange([...selectedDomains, domain]);
+    }
   };
-  const toggleDomain = (value: string) => {
-    apply((next) => {
-      const current = new Set(next.getAll('domains'));
-      if (current.has(value)) current.delete(value);
-      else current.add(value);
-      next.delete('domains');
-      Array.from(current).forEach((v) => next.append('domains', v));
-    });
+
+  const handleGroupToggle = (groupName: string) => {
+    const groupPositions = POSITION_GROUPS[groupName as keyof typeof POSITION_GROUPS];
+    const allSelected = groupPositions.every(p => selectedPositions.includes(p));
+    
+    if (allSelected) {
+      // Deselect all in group
+      onPositionsChange(selectedPositions.filter(p => !groupPositions.includes(p)));
+    } else {
+      // Select all in group
+      const newPositions = [...selectedPositions];
+      groupPositions.forEach(p => {
+        if (!newPositions.includes(p)) {
+          newPositions.push(p);
+        }
+      });
+      onPositionsChange(newPositions);
+    }
   };
-  const setStatus = (v: 'true' | 'false') =>
-    apply((next) => next.set('isActive', v));
-  const setOrder = (v: '0' | '1') => apply((next) => next.set('order', v));
-  const resetAll = () => setSp(new URLSearchParams());
 
   return (
     <div className="filter-bar">
-      {/* Roles trigger */}
-      <div style={{ position: 'relative' }}>
+      {/* Position Filter */}
+      <div className="filter-item" ref={positionRef}>
         <button
-          className="filter-trigger"
-          onClick={() => setOpenRoles((o) => !o)}
+          className={`filter-button ${selectedPositions.length > 0 ? 'active' : ''}`}
+          onClick={() => setShowPositionDropdown(!showPositionDropdown)}
         >
           직군 필터
         </button>
-        {openRoles && (
-          <div className="popover">
-            <div className="popover-section-title">개발</div>
-            <div className="checkbox-list">
-              {POSITIONS.filter((p) => p.label !== '개발 전체').map((p) => (
-                <label key={p.label}>
+        {showPositionDropdown && (
+          <div className="filter-dropdown">
+            {Object.entries(POSITION_GROUPS).map(([groupName, positions]) => (
+              <div key={groupName} className="filter-group">
+                <label className="filter-group-label">
                   <input
                     type="checkbox"
-                    checked={p.values.every((v) => roles.includes(v))}
-                    onChange={() => p.values.forEach((v) => toggleRole(v))}
+                    checked={positions.every(p => selectedPositions.includes(p))}
+                    onChange={() => handleGroupToggle(groupName)}
                   />
-                  {p.label}
+                  <span>{groupName}</span>
                 </label>
-              ))}
-            </div>
-            <div className="actions-row">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  resetAll();
-                  setOpenRoles(false);
-                }}
-              >
-                초기화
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => setOpenRoles(false)}
-              >
-                적용
-              </button>
-            </div>
+                <div className="filter-group-items">
+                  {positions.map(position => (
+                    <label key={position} className="filter-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedPositions.includes(position)}
+                        onChange={() => handlePositionToggle(position)}
+                      />
+                      <span>{POSITION_NAMES[position]}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
-      {/* Status trigger */}
-      <div style={{ position: 'relative' }}>
+
+      {/* Active Status Filter */}
+      <button
+        className={`filter-button ${isActive ? 'active' : ''}`}
+        onClick={() => onIsActiveChange(!isActive)}
+      >
+        {isActive ? '모집중' : '모집상태'}
+      </button>
+
+      {/* Domain Filter */}
+      <div className="filter-item" ref={domainRef}>
         <button
-          className="filter-trigger"
-          onClick={() => setOpenStatus((o) => !o)}
+          className={`filter-button ${selectedDomains.length > 0 ? 'active' : ''}`}
+          onClick={() => setShowDomainDropdown(!showDomainDropdown)}
         >
-          모집상태 ▾
+          업종
         </button>
-        {openStatus && (
-          <div className="popover">
-            <div className="checkbox-list">
-              <label>
+        {showDomainDropdown && (
+          <div className="filter-dropdown">
+            {(Object.keys(DOMAIN_NAMES) as Domain[]).map(domain => (
+              <label key={domain} className="filter-checkbox">
                 <input
-                  type="radio"
-                  name="active"
-                  checked={isActive === 'false'}
-                  onChange={() => setStatus('false')}
-                />{' '}
-                전체
+                  type="checkbox"
+                  checked={selectedDomains.includes(domain)}
+                  onChange={() => handleDomainToggle(domain)}
+                />
+                <span>{DOMAIN_NAMES[domain]}</span>
               </label>
-              <label>
-                <input
-                  type="radio"
-                  name="active"
-                  checked={isActive === 'true'}
-                  onChange={() => setStatus('true')}
-                />{' '}
-                모집중
-              </label>
-            </div>
-            <div className="actions-row">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  setStatus('false');
-                  setOpenStatus(false);
-                }}
-              >
-                초기화
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => setOpenStatus(false)}
-              >
-                적용
-              </button>
-            </div>
+            ))}
           </div>
         )}
       </div>
-      {/* Domains trigger */}
-      <div style={{ position: 'relative' }}>
-        <button
-          className="filter-trigger"
-          onClick={() => setOpenDomains((o) => !o)}
-        >
-          업종 ▾
-        </button>
-        {openDomains && (
-          <div className="popover">
-            <div className="checkbox-list">
-              {DOMAINS.map((d) => (
-                <label key={d}>
-                  <input
-                    type="checkbox"
-                    checked={domains.includes(d)}
-                    onChange={() => toggleDomain(d)}
-                  />{' '}
-                  {d}
-                </label>
-              ))}
-            </div>
-            <div className="actions-row">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  resetAll();
-                  setOpenDomains(false);
-                }}
-              >
-                초기화
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => setOpenDomains(false)}
-              >
-                적용
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      {/* Order buttons */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          className="filter-trigger"
-          style={order === '0' ? { borderColor: 'var(--primary-600)' } : {}}
-          onClick={() => setOrder('0')}
-        >
-          최신순
-        </button>
-        <button
-          className="filter-trigger"
-          style={order === '1' ? { borderColor: 'var(--primary-600)' } : {}}
-          onClick={() => setOrder('1')}
-        >
-          마감순
-        </button>
-      </div>
-      <div style={{ marginLeft: 'auto' }}>
-        <button className="btn-secondary" onClick={resetAll}>
-          전체 초기화
-        </button>
-      </div>
+
+      {/* Order Filter */}
+      <button
+        className={`filter-button ${order !== 0 ? 'active' : ''}`}
+        onClick={() => onOrderChange(order === 0 ? 1 : 0)}
+      >
+        {order === 0 ? '최신순' : '마감순'}
+      </button>
+
+      {/* Reset Button */}
+      <button className="filter-button filter-reset" onClick={onReset}>
+        초기화
+      </button>
     </div>
   );
-}
+};
+
+export default FilterBar;
