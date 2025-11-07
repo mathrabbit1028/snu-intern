@@ -1,5 +1,5 @@
-// Simple API client with credentials support
-const BASE_URL = 'https://api-internhasha.wafflestudio.com';
+// Simple API client with credentials support (proxied by Vite dev server)
+const BASE_URL = '';
 
 const TOKEN_KEY = 'auth_token_v1';
 
