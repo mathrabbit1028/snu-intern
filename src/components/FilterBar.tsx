@@ -70,12 +70,10 @@ export default function FilterBar() {
     setSp(next);
   };
 
-  
   const toggleRoles = (values: string[]) => {
     apply((next) => {
       const current = new Set(next.getAll('roles'));
       const allSelected = values.every((v) => current.has(v));
-      
       if (allSelected) {
         // 모두 선택되어 있으면 모두 해제
         values.forEach((v) => current.delete(v));
@@ -83,12 +81,10 @@ export default function FilterBar() {
         // 하나라도 선택되지 않았으면 모두 선택
         values.forEach((v) => current.add(v));
       }
-      
       next.delete('roles');
       Array.from(current).forEach((v) => next.append('roles', v));
     });
   };
-  
   const toggleDomain = (value: string) => {
     apply((next) => {
       const current = new Set(next.getAll('domains'));
