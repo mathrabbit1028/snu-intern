@@ -98,7 +98,7 @@ export default function FilterBar() {
     apply((next) => next.set('isActive', v));
   const setOrder = (v: '0' | '1') => apply((next) => next.set('order', v));
   const resetAll = () => setSp(new URLSearchParams());
-
+  
   return (
     <div className="filter-bar-container">
       <div className="filter-bar">
