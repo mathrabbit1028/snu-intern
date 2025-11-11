@@ -55,9 +55,6 @@ export default function FilterBar() {
   const [openRoles, setOpenRoles] = useState(false);
   const [openDomains, setOpenDomains] = useState(false);
   const [openStatus, setOpenStatus] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(['개발'])
-  );
   const roles = sp.getAll('roles');
   const domains = sp.getAll('domains');
   const isActive = sp.get('isActive') ?? 'false';
@@ -74,6 +71,7 @@ export default function FilterBar() {
     apply((next) => {
       const current = new Set(next.getAll('roles'));
       const allSelected = values.every((v) => current.has(v));
+
       if (allSelected) {
         // 모두 선택되어 있으면 모두 해제
         values.forEach((v) => current.delete(v));
@@ -81,10 +79,12 @@ export default function FilterBar() {
         // 하나라도 선택되지 않았으면 모두 선택
         values.forEach((v) => current.add(v));
       }
+
       next.delete('roles');
       Array.from(current).forEach((v) => next.append('roles', v));
     });
   };
+
   const toggleDomain = (value: string) => {
     apply((next) => {
       const current = new Set(next.getAll('domains'));
@@ -99,79 +99,17 @@ export default function FilterBar() {
   const setOrder = (v: '0' | '1') => apply((next) => next.set('order', v));
   const resetAll = () => setSp(new URLSearchParams());
 
-  const toggleGroup = (title: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(title)) {
-        next.delete(title);
-      } else {
-        next.add(title);
-      }
-      return next;
-    });
-  };
-
   return (
-    <div className="filter-bar">
-      {/* Roles trigger */}
-      <div style={{ position: 'relative' }}>
+    <div className="filter-bar-container">
+      <div className="filter-bar">
+        {/* Roles trigger */}
         <button
           className="filter-trigger"
           onClick={() => setOpenRoles((o) => !o)}
         >
-          직군 필터 ▾
+          직군 필터 {openRoles ? '▲' : '▼'}
         </button>
-        {openRoles && (
-          <div className="popover">
-            {ROLE_GROUPS.map((group) => (
-              <div key={group.title} className="accordion-group">
-                <button
-                  className="accordion-header"
-                  onClick={() => toggleGroup(group.title)}
-                >
-                  <span>{group.title}</span>
-                  <span className="accordion-icon">
-                    {expandedGroups.has(group.title) ? '▼' : '▶'}
-                  </span>
-                </button>
-                {expandedGroups.has(group.title) && (
-                  <div className="accordion-content">
-                    {group.roles.map((role) => (
-                      <label key={role.label}>
-                        <input
-                          type="checkbox"
-                          checked={role.values.every((v) => roles.includes(v))}
-                          onChange={() => toggleRoles(role.values)}
-                        />
-                        {role.label}
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            <div className="actions-row">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  resetAll();
-                  setOpenRoles(false);
-                }}
-              >
-                초기화
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => setOpenRoles(false)}
-              >
-                적용
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      {/* Status trigger */}
-      <div style={{ position: 'relative' }}>
+        {/* Status trigger */}
         <button
           className="filter-trigger"
           onClick={() => setOpenStatus((o) => !o)}
@@ -219,9 +157,7 @@ export default function FilterBar() {
             </div>
           </div>
         )}
-      </div>
-      {/* Domains trigger */}
-      <div style={{ position: 'relative' }}>
+        {/* Domains trigger */}
         <button
           className="filter-trigger"
           onClick={() => setOpenDomains((o) => !o)}
@@ -261,29 +197,52 @@ export default function FilterBar() {
             </div>
           </div>
         )}
+        {/* Order buttons */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="filter-trigger"
+            style={order === '0' ? { borderColor: 'var(--primary-600)' } : {}}
+            onClick={() => setOrder('0')}
+          >
+            최신순
+          </button>
+          <button
+            className="filter-trigger"
+            style={order === '1' ? { borderColor: 'var(--primary-600)' } : {}}
+            onClick={() => setOrder('1')}
+          >
+            마감순
+          </button>
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          <button className="btn-secondary" onClick={resetAll}>
+            전체 초기화
+          </button>
+        </div>
       </div>
-      {/* Order buttons */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          className="filter-trigger"
-          style={order === '0' ? { borderColor: 'var(--primary-600)' } : {}}
-          onClick={() => setOrder('0')}
-        >
-          최신순
-        </button>
-        <button
-          className="filter-trigger"
-          style={order === '1' ? { borderColor: 'var(--primary-600)' } : {}}
-          onClick={() => setOrder('1')}
-        >
-          마감순
-        </button>
-      </div>
-      <div style={{ marginLeft: 'auto' }}>
-        <button className="btn-secondary" onClick={resetAll}>
-          전체 초기화
-        </button>
-      </div>
+
+      {/* Roles accordion content */}
+      {openRoles && (
+        <div className="filter-accordion-content">
+          {ROLE_GROUPS.map((group) => (
+            <div key={group.title} className="role-group">
+              <h3 className="role-group-title">{group.title}</h3>
+              <div className="role-group-items">
+                {group.roles.map((role) => (
+                  <label key={role.label} className="role-item">
+                    <input
+                      type="checkbox"
+                      checked={role.values.every((v) => roles.includes(v))}
+                      onChange={() => toggleRoles(role.values)}
+                    />
+                    {role.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
