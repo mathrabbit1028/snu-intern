@@ -55,6 +55,9 @@ export default function FilterBar() {
   const [openRoles, setOpenRoles] = useState(false);
   const [openDomains, setOpenDomains] = useState(false);
   const [openStatus, setOpenStatus] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(['개발'])
+  );
   const roles = sp.getAll('roles');
   const domains = sp.getAll('domains');
   const isActive = sp.get('isActive') ?? 'false';
@@ -98,6 +101,18 @@ export default function FilterBar() {
     apply((next) => next.set('isActive', v));
   const setOrder = (v: '0' | '1') => apply((next) => next.set('order', v));
   const resetAll = () => setSp(new URLSearchParams());
+
+  const toggleGroup = (title: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) {
+        next.delete(title);
+      } else {
+        next.add(title);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="filter-bar-container">
