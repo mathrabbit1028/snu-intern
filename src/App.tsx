@@ -6,6 +6,9 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Posts from './pages/Posts';
 import Signup from './pages/Signup';
+import MyPage from './pages/MyPage';
+import CreateProfile from './pages/CreateProfile';
+import EditProfile from './pages/EditProfile';
 
 const App = () => {
   return (
@@ -26,6 +29,9 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/posts" element={<Posts />} />
+              <Route path="/mypage" element={<MyPage />} />
+              <Route path="/profile/new" element={<CreateProfile />} />
+              <Route path="/profile/edit" element={<EditProfile />} />
             </Routes>
           </main>
           {/* Keep Modal in graph for future use; remains hidden when open=false */}

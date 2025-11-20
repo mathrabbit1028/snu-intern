@@ -109,6 +109,38 @@ export async function getPosts(
   }
 }
 
+// Fetch bookmarked posts for current user
+export async function getBookmarks() {
+  const url = `/api/post/bookmarks`;
+  const res = await fetch(url, {
+    headers: { ...authHeaders() },
+    credentials: 'include',
+  });
+  const isJson = res.headers.get('content-type')?.includes('application/json');
+  const data = isJson ? ((await res.json()) as unknown) : undefined;
+  if (!res.ok) {
+    interface ResponseData {
+      message?: string;
+    }
+    const message =
+      (isJson && ((data as ResponseData)?.message as string | undefined)) ||
+      `GET /api/post/bookmarks failed: ${res.status}`;
+    throw new Error(message);
+  }
+
+  // Many APIs just return array directly; reuse existing parser logic for safety.
+  try {
+    const parsed = parseGetPostsResponse(data);
+    return parsed.posts;
+  } catch (_e) {
+    if (Array.isArray(data))
+      return (data as unknown[])
+        .map(normalizePost)
+        .filter((p): p is Post => !!p);
+    return [];
+  }
+}
+
 export async function addBookmark(postId: string) {
   const url = `/api/post/${encodeURIComponent(postId)}/bookmark`;
   const res = await fetch(url, {
