@@ -189,10 +189,14 @@ export async function apiApplicantMe(): Promise<ApplicantProfile | null> {
       method: 'GET',
     });
     return res || null;
-  } catch (e) {
-    if (e instanceof Error && (e as any)?.data) {
-      const data: any = (e as any).data;
-      const code = data?.code || data?.errorCode || data?.error?.code;
+  } catch (e: unknown) {
+    if (typeof e === 'object' && e !== null && 'data' in e) {
+      const data = (e as { data?: unknown }).data;
+      // Try to extract code if possible
+      let code: string | undefined;
+      if (typeof data === 'object' && data !== null) {
+        code = (data as any)?.code || (data as any)?.errorCode || (data as any)?.error?.code;
+      }
       if (code === 'APPLICANT_002') return null; // profile not created
     }
     throw e; // propagate other errors

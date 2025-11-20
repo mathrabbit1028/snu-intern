@@ -128,10 +128,14 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
       await apiUpsertApplicantMe(payload);
       alert('프로필이 저장되었습니다.');
       navigate('/mypage');
-    } catch (err: any) {
-      console.error('Profile save error:', err);
-      const msg = err?.message || '프로필 저장 중 오류가 발생했습니다.';
-      setServerError(msg);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Profile save error:', err);
+        setServerError(err.message);
+      } else {
+        console.error('Profile save error (non-Error):', err);
+        setServerError('프로필 저장 중 오류가 발생했습니다.');
+      }
     } finally {
       setSubmitBusy(false);
     }
