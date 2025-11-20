@@ -544,7 +544,7 @@ body {
   color: var(--text);
 }
 .tab-btn.active::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -589,8 +589,12 @@ body {
   font-size: 14px;
   font-weight: 600;
 }
-.status.closed { color: var(--danger); }
-.status.ongoing { color: var(--primary); }
+.status.closed {
+  color: var(--danger);
+}
+.status.ongoing {
+  color: var(--primary);
+}
 
 /* Empty profile state */
 .pill-btn {
@@ -604,7 +608,9 @@ body {
   border-radius: 100px;
   cursor: pointer;
 }
-.pill-btn:hover { background: #d1d5da; }
+.pill-btn:hover {
+  background: #d1d5da;
+}
 
 .profile-create-cta {
   appearance: none;
@@ -619,7 +625,9 @@ body {
   max-width: 420px;
   width: 100%;
 }
-.profile-create-cta:hover { background: #24292e; }
+.profile-create-cta:hover {
+  background: #24292e;
+}
 
 /* Profile form */
 .profile-form .profile-input {
@@ -647,8 +655,12 @@ body {
   cursor: pointer;
 }
 .add-btn:hover,
-.delete-btn:hover { background: var(--bg); }
-.delete-btn { color: var(--danger); }
+.delete-btn:hover {
+  background: var(--bg);
+}
+.delete-btn {
+  color: var(--danger);
+}
 .upload-box {
   display: flex;
   align-items: center;
@@ -661,6 +673,16 @@ body {
   font-size: 14px;
   color: var(--muted);
 }
-.upload-box:hover { border-color: var(--primary); color: var(--text); }
-.cv-file-name { font-size: 14px; font-weight: 600; }
-.tabs-row { display: flex; align-items: center; gap: 24px; }
+.upload-box:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+.cv-file-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+.tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}

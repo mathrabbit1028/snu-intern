@@ -2,13 +2,13 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import Modal from './components/Modal';
 import NavBar from './components/NavBar';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Posts from './pages/Posts';
-import Signup from './pages/Signup';
-import MyPage from './pages/MyPage';
 import CreateProfile from './pages/CreateProfile';
 import EditProfile from './pages/EditProfile';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import MyPage from './pages/MyPage';
+import Posts from './pages/Posts';
+import Signup from './pages/Signup';
 
 const App = () => {
   return (

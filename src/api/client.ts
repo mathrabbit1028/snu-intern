@@ -196,9 +196,15 @@ export async function apiApplicantMe(): Promise<ApplicantProfile | null> {
       let code: string | undefined;
       if (typeof data === 'object' && data !== null) {
         // Use optional chaining and type guards
-        if ('code' in data && typeof (data as { code?: unknown }).code === 'string') {
+        if (
+          'code' in data &&
+          typeof (data as { code?: unknown }).code === 'string'
+        ) {
           code = (data as { code?: string }).code;
-        } else if ('errorCode' in data && typeof (data as { errorCode?: unknown }).errorCode === 'string') {
+        } else if (
+          'errorCode' in data &&
+          typeof (data as { errorCode?: unknown }).errorCode === 'string'
+        ) {
           code = (data as { errorCode?: string }).errorCode;
         } else if (
           'error' in data &&
@@ -239,19 +245,6 @@ export async function apiUpsertApplicantMe(input: {
     method: 'PUT',
     body: input,
   });
-}
-
-// Utility to build CV path string per spec
-export function buildCvPath(originalFileName: string) {
-  const baseName = originalFileName.replace(/\s+/g, '_').replace(/\.pdf$/i, '');
-  const rand = Array.from({ length: 10 }, () =>
-    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 62)]
-  ).join('');
-  const d = new Date();
-  const yy = String(d.getFullYear()).slice(-2);
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `static/private/CV/${rand}_20${yy}${mm}${dd}/${baseName}.pdf`;
 }
 
 // Email verification APIs (to obtain successCode for signup)

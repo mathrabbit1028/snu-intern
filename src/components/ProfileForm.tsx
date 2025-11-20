@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  type ApplicantProfile,
   apiApplicantMe,
   apiUpsertApplicantMe,
-  type ApplicantProfile,
 } from '../api/client';
 
 // Validation helpers
@@ -41,7 +41,10 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
           }
           // Load department - may be comma-separated for multiple departments
           if (p.department && typeof p.department === 'string') {
-            const depts = p.department.split(',').map((s) => s.trim()).filter(Boolean);
+            const depts = p.department
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
             if (depts.length > 0) {
               setMainMajor(depts[0]); // first is main major
               setSubMajors(depts.slice(1)); // rest are sub majors
@@ -60,7 +63,9 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
     if (!mainMajor.trim()) {
       next.mainMajor = '주전공은 필수입니다.';
     }
-    const allMajors = [mainMajor, ...subMajors].map((m) => m.trim()).filter(Boolean);
+    const allMajors = [mainMajor, ...subMajors]
+      .map((m) => m.trim())
+      .filter(Boolean);
     const set = new Set(allMajors);
     if (set.size !== allMajors.length) {
       next.majorsDuplicate = '학과를 중복 작성할 수 없습니다.';
@@ -103,37 +108,34 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
     try {
       setServerError(null);
       const formattedId = formatStudentId(studentTwoDigits);
-      
+
       // Combine all departments: main major first, then sub majors
       const allDepts = [mainMajor, ...subMajors]
         .map((m) => m.trim())
         .filter(Boolean);
       const department = allDepts.join(','); // comma-separated with main first
-      
+
       // Build payload matching actual API schema with all required fields
-      const payload: any = {
+      const payload = {
         enrollYear: parseInt(formattedId, 10),
-        department: department,
-        positions: [],
-        slogan: "",
-        explanation: "",
-        stacks: [],
-        imageKey: "",
-        cvKey: "",
-        portfolioKey: "",
-        links: [],
+        department,
+        positions: [] as string[],
+        slogan: '',
+        explanation: '',
+        stacks: [] as string[],
+        imageKey: '',
+        cvKey: '',
+        portfolioKey: '',
+        links: [] as { description: string; link: string }[],
       };
-      
-      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+
       await apiUpsertApplicantMe(payload);
       alert('프로필이 저장되었습니다.');
       navigate('/mypage');
     } catch (err: unknown) {
       if (err instanceof Error) {
-        console.error('Profile save error:', err);
         setServerError(err.message);
       } else {
-        console.error('Profile save error (non-Error):', err);
         setServerError('프로필 저장 중 오류가 발생했습니다.');
       }
     } finally {
@@ -144,7 +146,11 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
   if (loading) return <div className="muted">불러오는 중...</div>;
 
   return (
-    <form onSubmit={submit} className="profile-form" style={{ display: 'grid', gap: 28 }}>
+    <form
+      onSubmit={submit}
+      className="profile-form"
+      style={{ display: 'grid', gap: 28 }}
+    >
       <div style={{ display: 'grid', gap: 6 }}>
         <label className="label" style={{ fontSize: 18, fontWeight: 700 }}>
           {mode === 'create' ? '프로필 생성' : '프로필 수정'}
@@ -158,9 +164,13 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
             placeholder="예: 25"
             value={studentTwoDigits}
             maxLength={2}
-            onChange={(e) => setStudentTwoDigits(e.target.value.replace(/[^0-9]/g, ''))}
+            onChange={(e) =>
+              setStudentTwoDigits(e.target.value.replace(/[^0-9]/g, ''))
+            }
           />
-          {errors.studentTwoDigits && <div className="error">{errors.studentTwoDigits}</div>}
+          {errors.studentTwoDigits && (
+            <div className="error">{errors.studentTwoDigits}</div>
+          )}
         </div>
         <div className="stack">
           <label className="label">학과 *</label>
@@ -171,13 +181,18 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
             onChange={(e) => setMainMajor(e.target.value)}
           />
           {subMajors.map((m, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div
+              key={i}
+              style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+            >
               <input
                 className="input profile-input"
                 placeholder={`복수/부전공 ${i + 1}`}
                 value={m}
                 onChange={(e) =>
-                  setSubMajors((list) => list.map((v, idx) => (idx === i ? e.target.value : v)))
+                  setSubMajors((list) =>
+                    list.map((v, idx) => (idx === i ? e.target.value : v))
+                  )
                 }
               />
               <button
@@ -190,12 +205,19 @@ export default function ProfileForm({ mode }: { mode: 'create' | 'edit' }) {
               </button>
             </div>
           ))}
-          <button type="button" className="add-btn" onClick={addSubMajor} disabled={subMajors.length >= 6}>
+          <button
+            type="button"
+            className="add-btn"
+            onClick={addSubMajor}
+            disabled={subMajors.length >= 6}
+          >
             추가
           </button>
           {errors.mainMajor && <div className="error">{errors.mainMajor}</div>}
           {errors.subMajors && <div className="error">{errors.subMajors}</div>}
-          {errors.majorsDuplicate && <div className="error">{errors.majorsDuplicate}</div>}
+          {errors.majorsDuplicate && (
+            <div className="error">{errors.majorsDuplicate}</div>
+          )}
         </div>
         <div className="stack">
           <label className="label">이력서 (CV) *</label>

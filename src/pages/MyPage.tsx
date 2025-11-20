@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { type ApplicantProfile, apiApplicantMe } from '../api/client';
+import { type Post, getBookmarks } from '../api/posts';
 import { useAuth } from '../auth/AuthContext';
-import { getBookmarks, type Post } from '../api/posts';
-import { apiApplicantMe, type ApplicantProfile } from '../api/client';
 
 export default function MyPage() {
   const { user, loading } = useAuth();
@@ -33,7 +33,9 @@ export default function MyPage() {
       })
       .catch((e) => {
         if (!alive) return;
-        setError(e instanceof Error ? e.message : '북마크를 불러오지 못했습니다');
+        setError(
+          e instanceof Error ? e.message : '북마크를 불러오지 못했습니다'
+        );
         setItems([]);
       })
       .finally(() => alive && setBusy(false));
@@ -55,7 +57,9 @@ export default function MyPage() {
       .catch((e) => {
         if (!alive) return;
         // For non-APPLICANT_002 errors, surface message
-        setError(e instanceof Error ? e.message : '프로필을 불러오지 못했습니다');
+        setError(
+          e instanceof Error ? e.message : '프로필을 불러오지 못했습니다'
+        );
         setProfile(null);
       })
       .finally(() => alive && setProfileBusy(false));
@@ -70,8 +74,11 @@ export default function MyPage() {
       return <span className="status ongoing">상시모집</span>;
     }
     const date = new Date(raw);
-    if (isNaN(date.getTime())) return <span className="status ongoing">상시모집</span>;
-    const diffDays = Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (isNaN(date.getTime()))
+      return <span className="status ongoing">상시모집</span>;
+    const diffDays = Math.ceil(
+      (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    );
     if (diffDays < 0) return <span className="status closed">마감</span>;
     if (diffDays === 0) return <span className="status ongoing">D-Day</span>;
     return <span className="status ongoing">D-{diffDays}</span>;
@@ -143,12 +150,15 @@ export default function MyPage() {
                         .map((d) => d.trim())
                         .filter(Boolean);
                       // First is main major, rest are sub majors with label
-                      const formatted = depts.map((dept, idx) => 
-                        idx === 0 ? dept : `${dept}(복수전공)`
-                      ).join('·');
+                      const formatted = depts
+                        .map((dept, idx) =>
+                          idx === 0 ? dept : `${dept}(복수전공)`
+                        )
+                        .join('·');
                       // Format enrollYear: subtract 2000 for 20xx years
                       const year = Number(profile.enrollYear);
-                      const displayYear = year >= 2000 ? year - 2000 : year - 1900;
+                      const displayYear =
+                        year >= 2000 ? year - 2000 : year - 1900;
                       return `${formatted} ${displayYear}학번`;
                     })()}
                   </div>
@@ -206,10 +216,16 @@ export default function MyPage() {
             <div style={{ display: 'grid', gap: 16 }}>
               {items.map((p) => (
                 <div key={p.id} className="bookmark-row">
-                  <div className="bookmark-icon" aria-hidden>🔖</div>
+                  <div className="bookmark-icon" aria-hidden>
+                    🔖
+                  </div>
                   <div className="bookmark-main">
-                    <div className="bookmark-company">{p.companyName || '회사명 없음'}</div>
-                    <div className="bookmark-title">{p.positionTitle || '공고 제목 없음'}</div>
+                    <div className="bookmark-company">
+                      {p.companyName || '회사명 없음'}
+                    </div>
+                    <div className="bookmark-title">
+                      {p.positionTitle || '공고 제목 없음'}
+                    </div>
                   </div>
                   <div className="bookmark-status">{renderStatus(p)}</div>
                 </div>
