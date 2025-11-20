@@ -2,8 +2,11 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import Modal from './components/Modal';
 import NavBar from './components/NavBar';
+import CreateProfile from './pages/CreateProfile';
+import EditProfile from './pages/EditProfile';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import MyPage from './pages/MyPage';
 import Posts from './pages/Posts';
 import Signup from './pages/Signup';
 
@@ -26,6 +29,9 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/posts" element={<Posts />} />
+              <Route path="/mypage" element={<MyPage />} />
+              <Route path="/profile/new" element={<CreateProfile />} />
+              <Route path="/profile/edit" element={<EditProfile />} />
             </Routes>
           </main>
           {/* Keep Modal in graph for future use; remains hidden when open=false */}

@@ -175,5 +175,77 @@ export function apiMe() {
   return request<MeResponse>('/api/auth/me', { method: 'GET' });
 }
 
+// Applicant profile (detailed resume/profile). Returns null if not created yet (APPLICANT_002)
+export type ApplicantProfile = {
+  id?: string | number;
+  name?: string;
+  email?: string;
+  [k: string]: unknown; // include any other dynamic fields
+};
+
+export async function apiApplicantMe(): Promise<ApplicantProfile | null> {
+  try {
+    const res = await request<ApplicantProfile>('/api/applicant/me', {
+      method: 'GET',
+    });
+    return res || null;
+  } catch (e: unknown) {
+    if (typeof e === 'object' && e !== null && 'data' in e) {
+      const data = (e as { data?: unknown }).data;
+      // Try to extract code if possible, without using any
+      let code: string | undefined;
+      if (typeof data === 'object' && data !== null) {
+        // Use optional chaining and type guards
+        if (
+          'code' in data &&
+          typeof (data as { code?: unknown }).code === 'string'
+        ) {
+          code = (data as { code?: string }).code;
+        } else if (
+          'errorCode' in data &&
+          typeof (data as { errorCode?: unknown }).errorCode === 'string'
+        ) {
+          code = (data as { errorCode?: string }).errorCode;
+        } else if (
+          'error' in data &&
+          typeof (data as { error?: unknown }).error === 'object' &&
+          (data as { error?: unknown }).error !== null
+        ) {
+          const errorObj = (data as { error?: { code?: unknown } }).error;
+          if (
+            errorObj &&
+            'code' in errorObj &&
+            typeof (errorObj as { code?: unknown }).code === 'string'
+          ) {
+            code = (errorObj as { code?: string }).code;
+          }
+        }
+      }
+      if (code === 'APPLICANT_002') return null; // profile not created
+    }
+    throw e; // propagate other errors
+  }
+}
+
+// Create or update applicant profile
+export async function apiUpsertApplicantMe(input: {
+  enrollYear: number; // like 2025, 1999
+  department: string; // single department (main major)
+  positions?: string[]; // optional positions
+  slogan?: string;
+  explanation?: string;
+  stacks?: string[];
+  imageKey?: string;
+  cvKey?: string; // CV file key
+  portfolioKey?: string;
+  links?: Array<{ description: string; link: string }>;
+}) {
+  // Use PUT only; surface detailed error
+  return await request<unknown>('/api/applicant/me', {
+    method: 'PUT',
+    body: input,
+  });
+}
+
 // Email verification APIs (to obtain successCode for signup)
 // (Email verification APIs removed as signup no longer requires verification in this app)

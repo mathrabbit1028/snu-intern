@@ -24,7 +24,9 @@ const NavBar = () => {
             className="gap-12"
             style={{ gridAutoFlow: 'column', alignItems: 'center' }}
           >
-            <span>{user.name}</span>
+            <Link className="nav-btn" to="/mypage">
+              마이페이지
+            </Link>
             <button className="nav-btn" onClick={onLogout}>
               로그아웃
             </button>
