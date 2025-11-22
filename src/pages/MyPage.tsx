@@ -15,14 +15,14 @@ export default function MyPage() {
   const [profile, setProfile] = useState<ApplicantProfile | null | undefined>(
     undefined
   );
-  const hasProfile = !!profile; // null = no profile, object = has profile
+  const hasProfile = !!profile;
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
   }, [loading, user, navigate]);
 
   useEffect(() => {
-    if (tab !== 'bookmarks') return; // only fetch when bookmarks tab active
+    if (tab !== 'bookmarks') return;
     let alive = true;
     setBusy(true);
     setError(null);
@@ -44,7 +44,6 @@ export default function MyPage() {
     };
   }, [tab]);
 
-  // Load profile when info tab active
   useEffect(() => {
     if (tab !== 'info') return;
     let alive = true;
@@ -52,11 +51,10 @@ export default function MyPage() {
     apiApplicantMe()
       .then((p) => {
         if (!alive) return;
-        setProfile(p); // p=null means no profile
+        setProfile(p);
       })
       .catch((e) => {
         if (!alive) return;
-        // For non-APPLICANT_002 errors, surface message
         setError(
           e instanceof Error ? e.message : '프로필을 불러오지 못했습니다'
         );
@@ -70,9 +68,7 @@ export default function MyPage() {
 
   const renderStatus = (p: Post) => {
     const raw = p.employmentEndDate?.trim();
-    if (!raw) {
-      return <span className="status ongoing">상시모집</span>;
-    }
+    if (!raw) return <span className="status ongoing">상시모집</span>;
     const date = new Date(raw);
     if (isNaN(date.getTime()))
       return <span className="status ongoing">상시모집</span>;
@@ -84,9 +80,121 @@ export default function MyPage() {
     return <span className="status ongoing">D-{diffDays}</span>;
   };
 
+  const renderProfileInfo = () => {
+    if (!profile) return null;
+
+    const depts = String(profile.department || '')
+      .split(',')
+      .map((d) => d.trim())
+      .filter(Boolean);
+    const formattedDept = depts
+      .map((dept, idx) => (idx === 0 ? dept : `${dept}(복수전공)`))
+      .join(' · ');
+
+    const year = Number(profile.enrollYear);
+    const displayYear = year >= 2000 ? year - 2000 : year - 1900;
+
+    return (
+      <div className="card profile-view-card">
+        {/* Header Section */}
+        <div className="profile-header">
+          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+            {String(profile.name)}
+          </h2>
+          <div className="profile-meta">
+            <div>{String(profile.email)}</div>
+            <div>
+              {formattedDept} {displayYear}학번
+            </div>
+          </div>
+        </div>
+
+        <div className="divider" />
+
+        <h3 style={{ fontSize: 18, fontWeight: 700 }}>기본 정보</h3>
+
+        {/* Positions */}
+        <div className="info-block">
+          <div className="info-label">희망 직무</div>
+          <div className="info-content">
+            {profile.positions && profile.positions.length > 0 ? (
+              profile.positions.join(', ')
+            ) : (
+              <span className="muted">입력된 희망 직무가 없습니다.</span>
+            )}
+          </div>
+        </div>
+
+        {/* Tech Stack */}
+        <div className="info-block">
+          <div className="info-label">기술 스택</div>
+          <div className="info-content tags-display">
+            {profile.stacks && profile.stacks.length > 0 ? (
+              profile.stacks.map((s) => (
+                <span key={s} className="display-tag">
+                  {s}
+                </span>
+              ))
+            ) : (
+              <span className="muted">입력된 기술 스택이 없습니다.</span>
+            )}
+          </div>
+        </div>
+
+        {/* Self Intro */}
+        <div className="info-block">
+          <div className="info-label">자기소개</div>
+          <div className="info-content pre-wrap">
+            {profile.slogan && (
+              <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                "{profile.slogan}"
+              </div>
+            )}
+            {profile.explanation || (
+              <span className="muted">입력된 자기소개가 없습니다.</span>
+            )}
+          </div>
+        </div>
+
+        {/* Links */}
+        <div className="info-block">
+          <div className="info-label">소개 링크</div>
+          <div className="info-content link-list">
+            {profile.links && profile.links.length > 0 ? (
+              profile.links.map((l, i) => (
+                <a
+                  key={i}
+                  href={l.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="profile-link-item"
+                >
+                  {l.description || l.link}{' '}
+                  <span style={{ fontSize: 12 }}>🔗</span>
+                </a>
+              ))
+            ) : (
+              <span className="muted">입력된 링크가 없습니다.</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="container page" style={{ display: 'grid', gap: 32 }}>
-      <h1 style={{ margin: 0 }}>마이페이지</h1>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <h1 style={{ margin: 0 }}>마이페이지</h1>
+        <div style={{ fontSize: 14, color: 'var(--muted)' }}></div>
+      </div>
+
       <div className="tabs-row">
         <div className="tabs">
           <button
@@ -121,69 +229,19 @@ export default function MyPage() {
           </button>
         )}
       </div>
+
       {tab === 'info' ? (
         hasProfile ? (
-          <div className="card" style={{ display: 'grid', gap: 16 }}>
-            <h2 style={{ margin: 0, fontSize: 20 }}>내 프로필</h2>
-            {profileBusy ? (
-              <div className="muted">불러오는 중...</div>
-            ) : (
-              <div style={{ display: 'grid', gap: 12 }}>
-                {/* Large name without label */}
-                {profile?.name && (
-                  <div style={{ fontSize: 24, fontWeight: 700 }}>
-                    {String(profile.name)}
-                  </div>
-                )}
-                {/* Small email without label */}
-                {profile?.email && (
-                  <div style={{ fontSize: 14, color: 'var(--muted)' }}>
-                    {String(profile.email)}
-                  </div>
-                )}
-                {/* Department(s) with middot separator + enrollYear */}
-                {profile?.department && profile?.enrollYear ? (
-                  <div style={{ fontSize: 14 }}>
-                    {(() => {
-                      const depts = String(profile.department)
-                        .split(',')
-                        .map((d) => d.trim())
-                        .filter(Boolean);
-                      // First is main major, rest are sub majors with label
-                      const formatted = depts
-                        .map((dept, idx) =>
-                          idx === 0 ? dept : `${dept}(복수전공)`
-                        )
-                        .join('·');
-                      // Format enrollYear: subtract 2000 for 20xx years
-                      const year = Number(profile.enrollYear);
-                      const displayYear =
-                        year >= 2000 ? year - 2000 : year - 1900;
-                      return `${formatted} ${displayYear}학번`;
-                    })()}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </div>
+          profileBusy ? (
+            <div className="muted">불러오는 중...</div>
+          ) : (
+            renderProfileInfo()
+          )
         ) : profileBusy ? (
           <div className="muted">불러오는 중...</div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gap: 36,
-              justifyItems: 'center',
-              paddingTop: 40,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                textAlign: 'center',
-              }}
-            >
+          <div className="card empty-profile-card">
+            <div style={{ fontSize: 22, fontWeight: 700, textAlign: 'center' }}>
               아직 프로필이 등록되지 않았어요!
             </div>
             <div

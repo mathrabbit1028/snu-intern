@@ -1,4 +1,3 @@
-// Simple API client with credentials support (proxied by Vite dev server)
 const BASE_URL = '';
 
 const TOKEN_KEY = 'auth_token_v1';
@@ -81,12 +80,11 @@ async function request<T = unknown>(
   return data as T;
 }
 
-// Auth specific APIs
 export type MeResponse = {
   id?: number | string;
   email?: string;
-  name?: string; // assuming API uses 'name' for real name
-  realName?: string; // fallback key if API uses different naming
+  name?: string;
+  realName?: string;
   [k: string]: unknown;
 };
 
@@ -102,7 +100,6 @@ export async function apiSignup(input: {
   password: string;
   successCode?: string;
 }) {
-  // Try to be compatible: prefer structured body; if it fails, fallback to simple body
   const structured: {
     authType: 'APPLICANT';
     info: {
@@ -131,7 +128,6 @@ export async function apiSignup(input: {
     if (res?.token) setToken(res.token);
     return res;
   } catch (_e) {
-    // Fallback to simple body { name, email, password }
     const simple = {
       name: input.name,
       email: input.email,
@@ -162,11 +158,10 @@ export async function apiLogin(input: { email: string; password: string }) {
 }
 
 export async function apiLogout() {
-  // Not specified, but commonly DELETE is used.
   try {
     await request<unknown>('/api/auth/user/session', { method: 'DELETE' });
   } catch (_e) {
-    // Best-effort; ignore errors so UI can still clear local state
+    // Ignore logout errors
   }
   setToken(null);
 }
@@ -175,12 +170,18 @@ export function apiMe() {
   return request<MeResponse>('/api/auth/me', { method: 'GET' });
 }
 
-// Applicant profile (detailed resume/profile). Returns null if not created yet (APPLICANT_002)
 export type ApplicantProfile = {
   id?: string | number;
   name?: string;
   email?: string;
-  [k: string]: unknown; // include any other dynamic fields
+  enrollYear?: number;
+  department?: string;
+  positions?: string[];
+  slogan?: string;
+  explanation?: string;
+  stacks?: string[];
+  links?: Array<{ description: string; link: string }>;
+  [k: string]: unknown;
 };
 
 export async function apiApplicantMe(): Promise<ApplicantProfile | null> {
@@ -192,10 +193,8 @@ export async function apiApplicantMe(): Promise<ApplicantProfile | null> {
   } catch (e: unknown) {
     if (typeof e === 'object' && e !== null && 'data' in e) {
       const data = (e as { data?: unknown }).data;
-      // Try to extract code if possible, without using any
       let code: string | undefined;
       if (typeof data === 'object' && data !== null) {
-        // Use optional chaining and type guards
         if (
           'code' in data &&
           typeof (data as { code?: unknown }).code === 'string'
@@ -212,40 +211,62 @@ export async function apiApplicantMe(): Promise<ApplicantProfile | null> {
           (data as { error?: unknown }).error !== null
         ) {
           const errorObj = (data as { error?: { code?: unknown } }).error;
-          if (
-            errorObj &&
-            'code' in errorObj &&
-            typeof (errorObj as { code?: unknown }).code === 'string'
-          ) {
+          if (errorObj && 'code' in errorObj) {
             code = (errorObj as { code?: string }).code;
           }
         }
       }
-      if (code === 'APPLICANT_002') return null; // profile not created
+      if (code === 'APPLICANT_002') return null;
     }
-    throw e; // propagate other errors
+    throw e;
   }
 }
 
-// Create or update applicant profile
 export async function apiUpsertApplicantMe(input: {
-  enrollYear: number; // like 2025, 1999
-  department: string; // single department (main major)
-  positions?: string[]; // optional positions
+  enrollYear: number;
+  department: string;
+  positions?: string[];
   slogan?: string;
   explanation?: string;
   stacks?: string[];
   imageKey?: string;
-  cvKey?: string; // CV file key
+  cvKey: string;
   portfolioKey?: string;
   links?: Array<{ description: string; link: string }>;
 }) {
-  // Use PUT only; surface detailed error
   return await request<unknown>('/api/applicant/me', {
     method: 'PUT',
     body: input,
   });
 }
+export type PresignedUrlResponse = {
+  url: string;
+  key: string;
+};
 
-// Email verification APIs (to obtain successCode for signup)
-// (Email verification APIs removed as signup no longer requires verification in this app)
+export async function apiGetUploadPresignedUrl(input: {
+  fileName: string;
+  fileType: 'CV' | 'PORTFOLIO' | 'USER_THUMBNAIL';
+}): Promise<PresignedUrlResponse> {
+  return await request<PresignedUrlResponse>('/api/s3', {
+    method: 'POST',
+    body: input,
+  });
+}
+
+export async function apiUploadFileToS3(
+  presignedUrl: string,
+  file: File
+): Promise<void> {
+  const response = await fetch(presignedUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': file.type,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`File upload failed with status ${response.status}`);
+  }
+}
