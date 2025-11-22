@@ -239,34 +239,3 @@ export async function apiUpsertApplicantMe(input: {
     body: input,
   });
 }
-export type PresignedUrlResponse = {
-  url: string;
-  key: string;
-};
-
-export async function apiGetUploadPresignedUrl(input: {
-  fileName: string;
-  fileType: 'CV' | 'PORTFOLIO' | 'USER_THUMBNAIL';
-}): Promise<PresignedUrlResponse> {
-  return await request<PresignedUrlResponse>('/api/s3', {
-    method: 'POST',
-    body: input,
-  });
-}
-
-export async function apiUploadFileToS3(
-  presignedUrl: string,
-  file: File
-): Promise<void> {
-  const response = await fetch(presignedUrl, {
-    method: 'PUT',
-    body: file,
-    headers: {
-      'Content-Type': file.type,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`File upload failed with status ${response.status}`);
-  }
-}
